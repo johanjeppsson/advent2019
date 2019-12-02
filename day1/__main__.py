@@ -1,5 +1,6 @@
-with open('day1/data.txt', 'r') as f:
-    data = list(map(int, f.readlines()))
+from utils import get_data
+
+data = list(map(int, get_data().split()))
 
 def fuel_req(mass):
     return max((mass // 3) - 2, 0)
