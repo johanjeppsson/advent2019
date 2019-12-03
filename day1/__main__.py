@@ -2,8 +2,10 @@ from utils import get_data
 
 data = list(map(int, get_data().split()))
 
+
 def fuel_req(mass):
     return max((mass // 3) - 2, 0)
+
 
 print("Fuel requirement without fuel: ", sum([fuel_req(m) for m in data]))
 
