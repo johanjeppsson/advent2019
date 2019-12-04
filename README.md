@@ -12,5 +12,8 @@ Activate the environment:
 `conda activate advent`
 
 ### Input
-Download the data manually and put it in `input.txt` in the folder of the day.
-To download the input automatically, get your [session cookie](https://github.com/wimglenn/advent-of-code-wim/issues/1) and save it as `.cookie` in the root directory.
+The input is specific to each user. There are two options for get_data to load
+your specific data:
+* Download the data manually and put it in `input.txt` in the folder of the day.
+* Get your [session cookie](https://github.com/wimglenn/advent-of-code-wim/issues/1) and save it as `.cookie` in the root directory. This allows get_data
+to download the input automatically.
