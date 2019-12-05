@@ -1,4 +1,5 @@
 from utils import get_data
+from utils.intcode import run_prog
 
 HALT = 99
 ADD = 1
@@ -11,31 +12,22 @@ prog = list(map(int, data.split(",")))
 prog[1] = 12
 prog[2] = 2
 
+prog_after = prog.copy()
+for out in run_prog(prog_after, []):
+    print(out)
 
-def calc(prog):
-    idx = 0
-    prog = prog.copy()
-    while True:
-        op = prog[idx]
-        if op == HALT:
-            return prog
-        in1, in2, out = prog[idx + 1 : idx + 4]
-
-        if op == ADD:
-            prog[out] = prog[in1] + prog[in2]
-        elif op == MUL:
-            prog[out] = prog[in1] * prog[in2]
-        idx += 4
-
-
-print(f"Res at idx 0: {calc(prog)[0]}")
+print(f"Res at idx 0: {prog_after[0]}")
 
 targ = 19690720
 for noun in range(100):
     for verb in range(100):
-        prog[1] = noun
-        prog[2] = verb
-        res = calc(prog)[0]
+        prog_after = prog.copy()
+        prog_after[1] = noun
+        prog_after[2] = verb
+
+        for out in run_prog(prog_after, []):
+            print(out)
+        res = prog_after[0]
         if res == targ:
             print(
                 f"Found match for noun {noun} and verb {verb}. Res: {100*noun + verb}"
