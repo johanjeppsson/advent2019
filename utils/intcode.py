@@ -30,72 +30,87 @@ POS = 0
 IMM = 1
 
 
-def parse_op(op):
-    inst = op % 100
-    modes = []
-    for i in range(N_PARAMS[inst]):
-        modes.append((op // (10 ** (2 + i))) % 10)
-    return inst, modes
+class IntCode:
+    def __init__(self, prog, dbg=False):
+        self.prog = prog.copy()
+        self.idx = 0
+        self.dbg = dbg
+        self.halted = False
 
+    def run(self, inp=[], wait_for_input=False, dbg=False):
+        if type(inp) == int:
+            inp = [inp]
 
-def gpi(prog, idx, mode):
-    """Get parameter idx."""
-    if mode == POS:
-        return prog[idx]
-    elif mode == IMM:
-        return idx
-    else:
-        raise ValueError(f"Unknown mode: {mode}")
+        out = []
+        while True:
+            inst, modes = self.get_op()
 
+            d_str = f"ptr: {self.idx}: {self.prog[self.idx]} inst: {inst}, {INST_NAMES[inst]} modes: {modes}"
 
-def d_print(s, dbg):
-    if dbg:
-        print(s)
+            if inst == HLT:
+                self.print(d_str)
+                self.print("")
+                self.halted = True
+                return out
 
+            params = []
+            for i in range(N_PARAMS[inst]):
+                params.append(self.prog[self.gpi(self.idx + 1 + i, modes[i])])
 
-def run_prog(prog, inp=[], dbg=False):
-    if type(inp) == int:
-        inp = [inp]
-    idx = 0
-    while True:
-        inst, modes = parse_op(prog[idx])
+            d_str += f" params: {params}"
+            self.print(d_str)
 
-        d_str = (
-            f"ptr: {idx}: {prog[idx]} inst: {inst}, {INST_NAMES[inst]} modes: {modes}"
-        )
+            if inst == ADD:
+                self.prog[self.gpi(self.idx + N_PARAMS[inst], 0)] = (
+                    params[0] + params[1]
+                )
+            elif inst == MUL:
+                self.prog[self.gpi(self.idx + N_PARAMS[inst], 0)] = (
+                    params[0] * params[1]
+                )
+            elif inst == INP:
+                if len(inp) > 0:
+                    self.prog[self.gpi(self.idx + N_PARAMS[inst], 0)] = inp.pop(0)
+                elif wait_for_input:
+                    # Halt program and wait for it to be called with more input
+                    return out
+                else:
+                    raise RuntimeError("Expected input, but input list was empty")
+            elif inst == OUT:
+                out.append(params[0])
+            elif inst == JPT:
+                if params[0] != 0:
+                    self.idx = params[1]
+                    continue
+            elif inst == JPF:
+                if params[0] == 0:
+                    self.idx = params[1]
+                    continue
+            elif inst == LTH:
+                self.prog[self.gpi(self.idx + 3, 0)] = int(params[0] < params[1])
+            elif inst == EQU:
+                self.prog[self.gpi(self.idx + 3, 0)] = int(params[0] == params[1])
+            else:
+                raise ValueError(f"Invalid instruction: {inst}")
+            self.idx += N_PARAMS[inst] + 1
 
-        if inst == HLT:
-            d_print(d_str, dbg)
-            d_print("", dbg)
-            break
-
-        params = []
+    def get_op(self):
+        op = self.prog[self.idx]
+        inst = op % 100
+        modes = []
         for i in range(N_PARAMS[inst]):
-            params.append(prog[gpi(prog, idx + 1 + i, modes[i])])
+            modes.append((op // (10 ** (2 + i))) % 10)
+        return inst, modes
 
-        d_str += f" params: {params}"
-        d_print(d_str, dbg)
-
-        if inst == ADD:
-            prog[gpi(prog, idx + N_PARAMS[inst], 0)] = params[0] + params[1]
-        elif inst == MUL:
-            prog[gpi(prog, idx + N_PARAMS[inst], 0)] = params[0] * params[1]
-        elif inst == INP:
-            prog[gpi(prog, idx + N_PARAMS[inst], 0)] = inp.pop(0)
-        elif inst == OUT:
-            yield params[0]
-        elif inst == JPT:
-            if params[0] != 0:
-                idx = params[1]
-                continue
-        elif inst == JPF:
-            if params[0] == 0:
-                idx = params[1]
-                continue
-        elif inst == LTH:
-            prog[gpi(prog, idx + 3, 0)] = int(params[0] < params[1])
-        elif inst == EQU:
-            prog[gpi(prog, idx + 3, 0)] = int(params[0] == params[1])
+    def gpi(self, idx, mode):
+        """Get parameter idx."""
+        if mode == POS:
+            return self.prog[idx]
+        elif mode == IMM:
+            return idx
         else:
-            raise ValueError(f"Invalid instruction: {inst}")
-        idx += N_PARAMS[inst] + 1
+            raise ValueError(f"Unknown mode: {mode}")
+
+    def print(self, s):
+        if self.dbg:
+            print(s)

@@ -1,5 +1,5 @@
 from utils import get_data
-from utils.intcode import run_prog
+from utils.intcode import IntCode
 
 HALT = 99
 ADD = 1
@@ -12,22 +12,22 @@ prog = list(map(int, data.split(",")))
 prog[1] = 12
 prog[2] = 2
 
-prog_after = prog.copy()
-for out in run_prog(prog_after, []):
+p = IntCode(prog)
+for out in p.run():
     print(out)
 
-print(f"Res at idx 0: {prog_after[0]}")
+print(f"Res at idx 0: {p.prog[0]}")
 
 targ = 19690720
 for noun in range(100):
     for verb in range(100):
-        prog_after = prog.copy()
-        prog_after[1] = noun
-        prog_after[2] = verb
+        prog[1] = noun
+        prog[2] = verb
 
-        for out in run_prog(prog_after, []):
+        p = IntCode(prog)
+        for out in p.run():
             print(out)
-        res = prog_after[0]
+        res = p.prog[0]
         if res == targ:
             print(
                 f"Found match for noun {noun} and verb {verb}. Res: {100*noun + verb}"

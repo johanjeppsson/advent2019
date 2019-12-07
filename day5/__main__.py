@@ -1,5 +1,5 @@
 from utils import get_data
-from utils.intcode import run_prog
+from utils.intcode import IntCode
 
 data = get_data()
 prog = list(map(int, data.split(",")))
@@ -7,8 +7,10 @@ prog = list(map(int, data.split(",")))
 AC_ID = 1
 DIAG_ID = 5
 
-for out in run_prog(prog.copy(), AC_ID):
+p = IntCode(prog)
+for out in p.run(AC_ID):
     print(out)
 
-for out in run_prog(prog.copy(), DIAG_ID):
+p = IntCode(prog)
+for out in p.run(DIAG_ID):
     print(out)
