@@ -35,10 +35,11 @@ def max_thrust(prog, phases):
     return best_thrust, best_phase
 
 
-prog = list(map(int, get_data(test=False).split(",")))
+if __name__ == "__main__":
+    prog = list(map(int, get_data(test=False).split(",")))
 
-max_t, phase = max_thrust(prog, tuple(range(5)))
-print(f"Max thruster (phase {phase}): {max_t}")
+    max_t, phase = max_thrust(prog, tuple(range(5)))
+    print(f"Max thruster (phase {phase}): {max_t}")
 
-max_t_feedback, phase = max_thrust(prog, tuple(range(5, 10)))
-print(f"Max thruster with feedback (phase: {phase}): {max_t_feedback}")
+    max_t_feedback, phase = max_thrust(prog, tuple(range(5, 10)))
+    print(f"Max thruster with feedback (phase: {phase}): {max_t_feedback}")

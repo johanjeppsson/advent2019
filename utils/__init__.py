@@ -6,13 +6,15 @@ import requests
 import __main__
 
 
-def get_data(test=False):
+def get_data(file_name=None, test=False):
     """Get raw data string for the current day.
-
     Download from adventofcode.com if necessary, using the session cookie
     in the .cookie file.
     """
-    dir_name = Path(__main__.__file__).parent
+    if file_name is None:
+        dir_name = Path(__main__.__file__).parent
+    else:
+        dir_name = Path(file_name).parent
     data_file = dir_name / "input.txt"
     if test:
         data_file = dir_name / "test_input.txt"
