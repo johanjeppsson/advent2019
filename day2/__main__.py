@@ -8,7 +8,7 @@ def run(prog, noun, verb):
 
     p = IntCode(prog)
     out = p.run()
-    return p.prog[0]
+    return p.ram[0]
 
 
 if __name__ == "__main__":
