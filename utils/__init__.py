@@ -1,4 +1,7 @@
 import re
+import sys
+import termios
+import tty
 from pathlib import Path
 
 import requests
@@ -38,3 +41,14 @@ def get_data(file_name=None, test=False):
     data_file.open("w").write(data)
 
     return data
+
+
+def get_key():
+    fd = sys.stdin.fileno()
+    old_settings = termios.tcgetattr(fd)
+    try:
+        tty.setraw(fd)
+        ch = sys.stdin.read(1)
+    finally:
+        termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+    return ch
