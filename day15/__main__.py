@@ -32,6 +32,7 @@ class Maze:
         self.oxy_y = None
 
         self.mark(self.x, self.y, self.PATH)
+        self.current_path = None
 
         if plot:
             self.disp = np.zeros(
@@ -86,28 +87,42 @@ class Maze:
 
     def update_plot(self):
         self.disp[...] = 0
-        r_idx = np.where((self.maze == self.WALL) | (self.maze == self.PATH))
-        r_idx = tuple((*r_idx, np.ones_like(r_idx) * 0))
+        # r_idx = np.where((self.maze == self.WALL) | (self.maze == self.PATH))
+        # r_idx = tuple((*r_idx, np.ones_like(r_idx) * 0))
 
-        self.disp[r_idx] = 255
+        # self.disp[r_idx] = 255
 
-        g_idx = np.where((self.maze == self.PATH) | (self.maze == self.ROBOT))
-        g_idx = tuple((*g_idx, np.ones_like(g_idx) * 1))
-        self.disp[g_idx] = 255
+        # g_idx = np.where((self.maze == self.PATH) | (self.maze == self.ROBOT))
+        # g_idx = tuple((*g_idx, np.ones_like(g_idx) * 1))
+        # self.disp[g_idx] = 255
 
-        b_idx = np.where((self.maze == self.PATH) | (self.maze == self.OXYGEN))
-        b_idx = tuple((*b_idx, np.ones_like(b_idx) * 2))
-        self.disp[b_idx] = 255
+        # b_idx = np.where((self.maze == self.PATH) | (self.maze == self.OXYGEN))
+        # b_idx = tuple((*b_idx, np.ones_like(b_idx) * 2))
+        # self.disp[b_idx] = 255
+
+        wall = np.where(self.maze == self.WALL)
+        self.disp[wall[0], wall[1], 0 * np.ones_like(wall[0])] = 220
+        self.disp[wall[0], wall[1], 1 * np.ones_like(wall[0])] = 100
+        self.disp[wall[0], wall[1], 2 * np.ones_like(wall[0])] = 100
+
+        path = np.where(self.maze == self.PATH)
+        self.disp[path[0], path[1], :] = 220
+
+        if self.current_path is not None:
+            for py, px in self.current_path:
+                self.disp[py, px, 0] = 150
+                self.disp[py, px, 1] = 70
+                self.disp[py, px, 2] = 150
 
         ry, rx = self.coord(self.y, self.x)
-        self.disp[ry, rx, :] = [0, 255, 0]
+        self.disp[ry, rx, :] = [100, 220, 128]
         if self.oxy_x is not None:
             oy, ox = self.coord(self.oxy_y, self.oxy_x)
-            self.disp[ry, rx, :] = [0, 0, 255]
+            self.disp[oy, ox, :] = [100, 100, 220]
 
         self.plot.set_data(self.disp)
         plt.draw()
-        plt.pause(0.01)
+        plt.pause(0.001)
 
     def handle_keypress(self, event):
         coords = [0, 0]
@@ -156,6 +171,10 @@ class Maze:
                 break
         print(self.maze.shape)
 
+    def dist(self, c1, c2):
+        # Manhattan dist
+        return abs(c1[0] - c2[0]) + abs(c1[1] - c2[1])
+
     def astar(self):
         while True:
             un = self.unknown_neighbors()
@@ -163,23 +182,33 @@ class Maze:
                 success_d = None
                 for n in un:
                     if self.move(*n):
+                        # This move was successful, go back and eliminate the
+                        # other neighbors.
                         success_d = n
                         self.move(-n[0], -n[1])
-                self.move(*success_d)
-                continue
+                if success_d is not None:
+                    # Continue in the successful direction.
+                    self.move(*success_d)
+                    continue
             cy, cx = self.coord(self.y, self.x)
-            possible_targets = zip(*np.where(self.maze == 0))
+            unknowns = list(zip(*np.where(self.maze == self.UNKNOWN)))
+            paths = list(zip(*np.where(self.maze == self.PATH)))
+            possible_targets = [
+                u for u in unknowns if min([self.dist(u, p) for p in paths]) == 1
+            ]
             paths = [
                 a_star((self.maze > 2).astype(int), (cy, cx), t)
                 for t in possible_targets
             ]
-            paths = [path_to_rel_moves(p) if p is not None else None for p in paths]
+            rel_paths = [path_to_rel_moves(p) if p is not None else None for p in paths]
             if not paths or all([p is None for p in paths]):
                 break
             path_lengths = [len(p) if p is not None else np.inf for p in paths]
-            shortest = paths[path_lengths.index(min(path_lengths))]
+            shortest = rel_paths[path_lengths.index(min(path_lengths))]
+            self.current_path = paths[path_lengths.index(min(path_lengths))]
             for move in shortest:
                 self.move(*move)
+            self.current_path = None
 
 
 if __name__ == "__main__":
