@@ -1,14 +1,17 @@
-from utils import get_data
 import numpy as np
 from tqdm import tqdm, trange
 
+from utils import get_data
+
+
 def get_phases(inp):
-    base = np.array([0, 1, 0 ,-1])
+    base = np.array([0, 1, 0, -1])
     bases = []
     for i in tqdm(range(len(inp)), desc="Calculating bases"):
         reps = int(np.ceil(inp.size / (base.size * (i + 1))))
-        bases.append(np.roll(np.repeat(np.tile(base, reps), i + 1), -1)[:inp.size])
+        bases.append(np.roll(np.repeat(np.tile(base, reps), i + 1), -1)[: inp.size])
     return np.vstack(bases)
+
 
 def FFT(inp, phases):
     out = []
@@ -17,12 +20,14 @@ def FFT(inp, phases):
     out = np.abs(np.array(out).sum(1).T) % 10
     return out
 
+
 def part1(inp, iters=100):
     phases = get_phases(inp)
     out = inp
     for i in trange(iters, desc="Iteration"):
         inp = FFT(inp, phases)
     return "".join(map(str, inp[:8]))
+
 
 def part2(inp, offs, iters=100):
     # Using the approach from part1 in this case is _really_ slow and requires
@@ -45,14 +50,14 @@ def part2(inp, offs, iters=100):
     # This means that the coefficients for each position i, the output is the
     # sum from i to the end of the array. If we iterate backwards, that means
     # that each position is the sum of the output on the previous index and
-    # the input of the current index, which is a cumulative sum. 
+    # the input of the current index, which is a cumulative sum.
     N = inp.size
     out = inp.copy()
-    assert(off > N // 2)
+    assert off > N // 2
     for i in trange(iters, desc="Iteration"):
-        out[offs:] = np.cumsum(inp[-1:offs-1:-1])[::-1] % 10
+        out[offs:] = np.cumsum(inp[-1 : offs - 1 : -1])[::-1] % 10
         inp = out
-    return "".join(map(str, out[off:off+8]))
+    return "".join(map(str, out[off : off + 8]))
 
 
 if __name__ == "__main__":
@@ -62,5 +67,5 @@ if __name__ == "__main__":
 
     inp = np.array(list(map(int, data.strip())))
     inp = np.tile(inp, 10000)
-    off = int(''.join(map(str, inp[:7])))
+    off = int("".join(map(str, inp[:7])))
     print(f"Part 2: {part2(inp, off)}")
